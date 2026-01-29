@@ -1,0 +1,6 @@
+# Connection String para Supabase
+
+postgresql://postgres:https://legionadminpanel.vercel.app@db.zrrukrcmsqofhwnxjkep.supabase.co:5432/postgres
+
+# Nota: Si el puerto es diferente (6543), usa:
+# postgresql://postgres:https://legionadminpanel.vercel.app@db.zrrukrcmsqofhwnxjkep.supabase.co:6543/postgres

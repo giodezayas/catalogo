@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { readBusiness, writeBusiness } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
+
+export async function GET() {
+  const business = readBusiness()
+  return NextResponse.json(business)
+}
+
+export async function PUT(request: NextRequest) {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const business = await request.json()
+    writeBusiness(business)
+    return NextResponse.json({ success: true, business })
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
