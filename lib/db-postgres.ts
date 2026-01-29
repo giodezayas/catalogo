@@ -4,13 +4,29 @@
 import { Pool } from 'pg'
 import { Business, Category, Product, Order } from '@/types'
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-})
+// Crear pool solo si DATABASE_URL está disponible
+// Esto evita errores durante el build si la variable no está configurada
+const getPool = () => {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not configured')
+  }
+  return new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  })
+}
+
+let pool: Pool | null = null
+const getPoolInstance = () => {
+  if (!pool) {
+    pool = getPool()
+  }
+  return pool
+}
 
 // Inicializar tablas (ejecutar una vez)
 export async function initDatabase() {
+  const pool = getPoolInstance()
   const client = await pool.connect()
   try {
     // Tabla de negocio
@@ -88,6 +104,7 @@ export async function initDatabase() {
 
 // Funciones de lectura
 export async function readBusiness(): Promise<Business> {
+  const pool = getPoolInstance()
   const result = await pool.query('SELECT data FROM business WHERE id = $1', ['1'])
   if (result.rows.length === 0) {
     throw new Error('Business not found')
@@ -96,6 +113,7 @@ export async function readBusiness(): Promise<Business> {
 }
 
 export async function readCategories(): Promise<Category[]> {
+  const pool = getPoolInstance()
   const result = await pool.query(
     "SELECT data FROM categories ORDER BY (data->>'order')::int"
   )
@@ -103,6 +121,7 @@ export async function readCategories(): Promise<Category[]> {
 }
 
 export async function readProducts(): Promise<Product[]> {
+  const pool = getPoolInstance()
   const result = await pool.query(
     "SELECT data FROM products ORDER BY (data->>'order')::int"
   )
@@ -110,6 +129,7 @@ export async function readProducts(): Promise<Product[]> {
 }
 
 export async function readOrders(): Promise<Order[]> {
+  const pool = getPoolInstance()
   const result = await pool.query('SELECT data FROM orders ORDER BY created_at DESC')
   return result.rows.map((row) => {
     const order = row.data as Order
@@ -120,6 +140,7 @@ export async function readOrders(): Promise<Order[]> {
 
 // Funciones de escritura
 export async function writeBusiness(business: Business): Promise<void> {
+  const pool = getPoolInstance()
   await pool.query(
     'INSERT INTO business (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = $2',
     [business.id, JSON.stringify(business)]
@@ -127,6 +148,7 @@ export async function writeBusiness(business: Business): Promise<void> {
 }
 
 export async function writeCategories(categories: Category[]): Promise<void> {
+  const pool = getPoolInstance()
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -147,6 +169,7 @@ export async function writeCategories(categories: Category[]): Promise<void> {
 }
 
 export async function writeProducts(products: Product[]): Promise<void> {
+  const pool = getPoolInstance()
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -167,6 +190,7 @@ export async function writeProducts(products: Product[]): Promise<void> {
 }
 
 export async function writeOrders(orders: Order[]): Promise<void> {
+  const pool = getPoolInstance()
   const client = await pool.connect()
   try {
     await client.query('BEGIN')

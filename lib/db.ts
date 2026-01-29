@@ -3,11 +3,13 @@
 // - PostgreSQL si DATABASE_URL está configurada (producción)
 // - JSON files si no (desarrollo local)
 
-import * as dbPostgres from './db-postgres'
 import * as dbJson from './db-json'
+import * as dbPostgres from './db-postgres'
 
 // Determinar qué módulo usar basado en DATABASE_URL
-const usePostgres = !!process.env.DATABASE_URL
+// En Next.js, process.env está disponible en build time si está en next.config.js
+// o en runtime si está en las variables de entorno de Vercel
+const usePostgres = typeof process !== 'undefined' && !!process.env.DATABASE_URL
 
 // Re-exportar funciones del módulo apropiado
 export const initDatabase = usePostgres ? dbPostgres.initDatabase : dbJson.initDatabase
