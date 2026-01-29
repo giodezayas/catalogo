@@ -18,9 +18,14 @@ export async function PUT(request: NextRequest) {
     const business = await request.json()
     await writeBusiness(business)
     return NextResponse.json({ success: true, business })
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error writing business:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     )
   }
