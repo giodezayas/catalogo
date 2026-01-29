@@ -31,7 +31,15 @@ export async function verifyToken(token: string): Promise<User | null> {
   try {
     const secret = new TextEncoder().encode(SECRET_KEY)
     const { payload } = await jwtVerify(token, secret)
-    return payload as User
+    // Extraer solo las propiedades de User del payload
+    if (payload && typeof payload === 'object' && 'id' in payload && 'username' in payload && 'role' in payload) {
+      return {
+        id: payload.id as string,
+        username: payload.username as string,
+        role: payload.role as 'admin' | 'operator',
+      }
+    }
+    return null
   } catch {
     return null
   }

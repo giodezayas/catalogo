@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { Product } from '@/types'
 
 export async function GET() {
-  const products = readProducts()
+  const products = await readProducts()
   return NextResponse.json(products)
 }
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const product: Product = await request.json()
-    const products = readProducts()
+    const products = await readProducts()
 
     // Generate ID if not provided
     if (!product.id) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     products.push(product)
-    writeProducts(products)
+    await writeProducts(products)
     return NextResponse.json({ success: true, product })
   } catch (error) {
     return NextResponse.json(
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const updatedProduct: Product = await request.json()
-    const products = readProducts()
+    const products = await readProducts()
     const index = products.findIndex((p) => p.id === updatedProduct.id)
 
     if (index === -1) {
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     }
 
     products[index] = updatedProduct
-    writeProducts(products)
+    await writeProducts(products)
     return NextResponse.json({ success: true, product: updatedProduct })
   } catch (error) {
     return NextResponse.json(
@@ -77,9 +77,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
-    const products = readProducts()
+    const products = await readProducts()
     const filtered = products.filter((p) => p.id !== id)
-    writeProducts(filtered)
+    await writeProducts(filtered)
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(

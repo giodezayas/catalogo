@@ -16,8 +16,8 @@ export async function GET() {
   }
 
   try {
-    // Importar dinámicamente para evitar errores si pg no está instalado
-    const { initDatabase } = await import('@/lib/db-postgres')
+    // Importar desde el módulo db que decide automáticamente qué usar
+    const { initDatabase } = await import('@/lib/db')
     await initDatabase()
     return NextResponse.json({
       success: true,

@@ -3,7 +3,7 @@ import { readBusiness, writeBusiness } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
 export async function GET() {
-  const business = readBusiness()
+  const business = await readBusiness()
   return NextResponse.json(business)
 }
 
@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const business = await request.json()
-    writeBusiness(business)
+    await writeBusiness(business)
     return NextResponse.json({ success: true, business })
   } catch (error) {
     return NextResponse.json(

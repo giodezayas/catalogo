@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { Category } from '@/types'
 
 export async function GET() {
-  const categories = readCategories()
+  const categories = await readCategories()
   return NextResponse.json(categories)
 }
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const category: Category = await request.json()
-    const categories = readCategories()
+    const categories = await readCategories()
     
     // Generate ID if not provided
     if (!category.id) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     categories.push(category)
-    writeCategories(categories)
+    await writeCategories(categories)
     return NextResponse.json({ success: true, category })
   } catch (error) {
     return NextResponse.json(
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     const updatedCategory: Category = await request.json()
-    const categories = readCategories()
+    const categories = await readCategories()
     const index = categories.findIndex((c) => c.id === updatedCategory.id)
 
     if (index === -1) {
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     }
 
     categories[index] = updatedCategory
-    writeCategories(categories)
+    await writeCategories(categories)
     return NextResponse.json({ success: true, category: updatedCategory })
   } catch (error) {
     return NextResponse.json(
@@ -77,9 +77,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
     }
 
-    const categories = readCategories()
+    const categories = await readCategories()
     const filtered = categories.filter((c) => c.id !== id)
-    writeCategories(filtered)
+    await writeCategories(filtered)
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(

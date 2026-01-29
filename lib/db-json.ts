@@ -143,40 +143,46 @@ function initDefaultData() {
 // Initialize on module load
 initDefaultData()
 
-// Read functions
-export function readBusiness(): Business {
+// Read functions (async para compatibilidad con PostgreSQL)
+export async function readBusiness(): Promise<Business> {
   const data = fs.readFileSync(BUSINESS_FILE, 'utf-8')
   return JSON.parse(data)
 }
 
-export function readCategories(): Category[] {
+export async function readCategories(): Promise<Category[]> {
   const data = fs.readFileSync(CATEGORIES_FILE, 'utf-8')
   return JSON.parse(data)
 }
 
-export function readProducts(): Product[] {
+export async function readProducts(): Promise<Product[]> {
   const data = fs.readFileSync(PRODUCTS_FILE, 'utf-8')
   return JSON.parse(data)
 }
 
-export function readOrders(): Order[] {
+export async function readOrders(): Promise<Order[]> {
   const data = fs.readFileSync(ORDERS_FILE, 'utf-8')
   return JSON.parse(data)
 }
 
-// Write functions
-export function writeBusiness(business: Business): void {
+// Write functions (async para compatibilidad con PostgreSQL)
+export async function writeBusiness(business: Business): Promise<void> {
   fs.writeFileSync(BUSINESS_FILE, JSON.stringify(business, null, 2))
 }
 
-export function writeCategories(categories: Category[]): void {
+export async function writeCategories(categories: Category[]): Promise<void> {
   fs.writeFileSync(CATEGORIES_FILE, JSON.stringify(categories, null, 2))
 }
 
-export function writeProducts(products: Product[]): void {
+export async function writeProducts(products: Product[]): Promise<void> {
   fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2))
 }
 
-export function writeOrders(orders: Order[]): void {
+export async function writeOrders(orders: Order[]): Promise<void> {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2))
+}
+
+// Función de inicialización (async para compatibilidad)
+export async function initDatabase(): Promise<void> {
+  // Ya se inicializa en initDefaultData(), solo retornamos
+  return Promise.resolve()
 }
