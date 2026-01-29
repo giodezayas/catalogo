@@ -5,10 +5,6 @@
 
 import * as dbJson from './db-json'
 
-// Importar PostgreSQL estáticamente
-// Next.js tree-shaking eliminará esto si no se usa en producción sin DATABASE_URL
-import * as dbPostgresModule from './db-postgres'
-
 // Determinar qué módulo usar basado en DATABASE_URL
 function shouldUsePostgres(): boolean {
   if (typeof process === 'undefined') return false
@@ -17,9 +13,15 @@ function shouldUsePostgres(): boolean {
   return hasDatabaseUrl
 }
 
+// Cargar módulo PostgreSQL dinámicamente para evitar problemas en build
+async function getDbPostgres() {
+  return await import('./db-postgres')
+}
+
 // Funciones wrapper que deciden qué implementación usar en runtime
 export async function initDatabase() {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.initDatabase()
   }
   return dbJson.initDatabase()
@@ -27,6 +29,7 @@ export async function initDatabase() {
 
 export async function readBusiness() {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.readBusiness()
   }
   return dbJson.readBusiness()
@@ -34,6 +37,7 @@ export async function readBusiness() {
 
 export async function readCategories() {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.readCategories()
   }
   return dbJson.readCategories()
@@ -41,6 +45,7 @@ export async function readCategories() {
 
 export async function readProducts() {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.readProducts()
   }
   return dbJson.readProducts()
@@ -48,6 +53,7 @@ export async function readProducts() {
 
 export async function readOrders() {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.readOrders()
   }
   return dbJson.readOrders()
@@ -55,6 +61,7 @@ export async function readOrders() {
 
 export async function writeBusiness(business: Parameters<typeof dbJson.writeBusiness>[0]) {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.writeBusiness(business)
   }
   return dbJson.writeBusiness(business)
@@ -62,6 +69,7 @@ export async function writeBusiness(business: Parameters<typeof dbJson.writeBusi
 
 export async function writeCategories(categories: Parameters<typeof dbJson.writeCategories>[0]) {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.writeCategories(categories)
   }
   return dbJson.writeCategories(categories)
@@ -69,6 +77,7 @@ export async function writeCategories(categories: Parameters<typeof dbJson.write
 
 export async function writeProducts(products: Parameters<typeof dbJson.writeProducts>[0]) {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.writeProducts(products)
   }
   return dbJson.writeProducts(products)
@@ -76,6 +85,7 @@ export async function writeProducts(products: Parameters<typeof dbJson.writeProd
 
 export async function writeOrders(orders: Parameters<typeof dbJson.writeOrders>[0]) {
   if (shouldUsePostgres()) {
+    const dbPostgresModule = await getDbPostgres()
     return dbPostgresModule.writeOrders(orders)
   }
   return dbJson.writeOrders(orders)
