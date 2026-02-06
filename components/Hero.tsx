@@ -11,16 +11,21 @@ export default function Hero({ business }: HeroProps) {
   const isOpen = business.status === 'open'
 
   return (
-    <section className="relative bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+    <section className="relative bg-gray-100 overflow-hidden min-h-[420px] flex items-center">
       {business.image ? (
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-10"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${business.image})` }}
         />
       ) : (
-        <div className="absolute inset-0 bg-[url('/banner.jpg')] bg-cover bg-center opacity-10" />
+        <div className="absolute inset-0 bg-[url('/banner.jpg')] bg-cover bg-center" />
       )}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+      {/* Overlay suave solo en la zona del texto para que la foto se vea y el texto sea legible */}
+      <div
+        className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent"
+        aria-hidden
+      />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 w-full">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full mb-4">
             <div

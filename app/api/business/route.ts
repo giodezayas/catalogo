@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readBusiness, writeBusiness } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
+// Forzar que esta ruta sea dinámica (no estática)
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET() {
   const business = await readBusiness()
   return NextResponse.json(business)
