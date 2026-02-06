@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Product, Category, ProductVariant } from '@/types'
 import toast from 'react-hot-toast'
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, Loader2 } from 'lucide-react'
 import ImageUpload from './ImageUpload'
 
 export default function ProductsManagement() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [savingProductId, setSavingProductId] = useState<string | null>(null)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showForm, setShowForm] = useState(false)
 
@@ -34,6 +36,8 @@ export default function ProductsManagement() {
   }
 
   async function handleSave(product: Product) {
+    const id = product.id || 'new'
+    setSavingProductId(id)
     try {
       if (product.id && products.find((p) => p.id === product.id)) {
         await api.updateProduct(product)
@@ -44,21 +48,26 @@ export default function ProductsManagement() {
       }
       setShowForm(false)
       setEditingProduct(null)
-      loadData()
+      await loadData()
     } catch (error) {
       toast.error('Error al guardar')
+    } finally {
+      setSavingProductId(null)
     }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return
 
+    setDeletingProductId(id)
     try {
       await api.deleteProduct(id)
       toast.success('Producto eliminado')
-      loadData()
+      await loadData()
     } catch (error) {
       toast.error('Error al eliminar')
+    } finally {
+      setDeletingProductId(null)
     }
   }
 
@@ -100,7 +109,8 @@ export default function ProductsManagement() {
             })
             setShowForm(true)
           }}
-          className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+          disabled={!!savingProductId || !!deletingProductId}
+          className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Nuevo Producto
@@ -319,17 +329,19 @@ export default function ProductsManagement() {
           <div className="flex gap-2 pt-4">
             <button
               onClick={() => handleSave(editingProduct)}
-              className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+              disabled={!!savingProductId}
+              className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
-              Guardar
+              {savingProductId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {savingProductId ? 'Guardando...' : 'Guardar'}
             </button>
             <button
               onClick={() => {
                 setShowForm(false)
                 setEditingProduct(null)
               }}
-              className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+              disabled={!!savingProductId}
+              className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-4 h-4" />
               Cancelar
@@ -357,15 +369,22 @@ export default function ProductsManagement() {
                   setEditingProduct({ ...product })
                   setShowForm(true)
                 }}
-                className="p-2 text-gray-600 hover:text-gray-900"
+                disabled={!!savingProductId || !!deletingProductId}
+                className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => handleDelete(product.id)}
-                className="p-2 text-red-600 hover:text-red-900"
+                disabled={!!savingProductId || !!deletingProductId}
+                className="p-2 text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Eliminar producto"
               >
-                <Trash2 className="w-4 h-4" />
+                {deletingProductId === product.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>

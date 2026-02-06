@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Category } from '@/types'
 import toast from 'react-hot-toast'
-import { Plus, Edit2, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, Loader2 } from 'lucide-react'
 
 export default function CategoriesManagement() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [savingCategoryId, setSavingCategoryId] = useState<string | null>(null)
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -29,6 +31,8 @@ export default function CategoriesManagement() {
   }
 
   async function handleSave(category: Category) {
+    const id = category.id || 'new'
+    setSavingCategoryId(id)
     try {
       if (category.id && categories.find((c) => c.id === category.id)) {
         await api.updateCategory(category)
@@ -40,21 +44,26 @@ export default function CategoriesManagement() {
       setEditingId(null)
       setEditingCategory(null)
       setShowAddForm(false)
-      loadCategories()
+      await loadCategories()
     } catch (error) {
       toast.error('Error al guardar')
+    } finally {
+      setSavingCategoryId(null)
     }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('¿Estás seguro de eliminar esta categoría?')) return
 
+    setDeletingCategoryId(id)
     try {
       await api.deleteCategory(id)
       toast.success('Categoría eliminada')
-      loadCategories()
+      await loadCategories()
     } catch (error) {
       toast.error('Error al eliminar')
+    } finally {
+      setDeletingCategoryId(null)
     }
   }
 
@@ -112,17 +121,19 @@ export default function CategoriesManagement() {
             <div className="flex gap-2">
               <button
                 onClick={() => handleSave(editingCategory)}
-                className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800"
+                disabled={!!savingCategoryId}
+                className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4" />
-                Guardar
+                {savingCategoryId ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {savingCategoryId ? 'Guardando...' : 'Guardar'}
               </button>
               <button
                 onClick={() => {
                   setShowAddForm(false)
                   setEditingCategory(null)
                 }}
-                className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+                disabled={!!savingCategoryId}
+                className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <X className="w-4 h-4" />
                 Cancelar
@@ -151,8 +162,10 @@ export default function CategoriesManagement() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => editingCategory && handleSave(editingCategory)}
-                    className="text-sm text-gray-600 hover:text-gray-900"
+                    disabled={!!savingCategoryId}
+                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
+                    {savingCategoryId === category.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                     Guardar
                   </button>
                   <button
@@ -160,7 +173,8 @@ export default function CategoriesManagement() {
                       setEditingId(null)
                       setEditingCategory(null)
                     }}
-                    className="text-sm text-gray-600 hover:text-gray-900"
+                    disabled={!!savingCategoryId}
+                    className="text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
@@ -180,15 +194,22 @@ export default function CategoriesManagement() {
                       setEditingId(category.id)
                       setEditingCategory({ ...category })
                     }}
-                    className="p-2 text-gray-600 hover:text-gray-900"
+                    disabled={!!savingCategoryId || !!deletingCategoryId}
+                    className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(category.id)}
-                    className="p-2 text-red-600 hover:text-red-900"
+                    disabled={!!savingCategoryId || !!deletingCategoryId}
+                    className="p-2 text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Eliminar categoría"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deletingCategoryId === category.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </>

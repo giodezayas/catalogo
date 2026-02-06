@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Business } from '@/types'
 import toast from 'react-hot-toast'
-import { Save } from 'lucide-react'
+import { Save, Loader2 } from 'lucide-react'
 import ImageUpload from './ImageUpload'
 
 export default function BusinessSettings() {
@@ -194,9 +194,9 @@ export default function BusinessSettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="w-4 h-4" />
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>

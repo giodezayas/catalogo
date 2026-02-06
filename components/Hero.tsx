@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { MapPin, Clock, Phone } from 'lucide-react'
 import { Business } from '@/types'
 
@@ -7,12 +8,26 @@ interface HeroProps {
   business: Business
 }
 
+const isOptimizableImage = (src: string) =>
+  src.startsWith('http') || src.startsWith('/')
+
 export default function Hero({ business }: HeroProps) {
   const isOpen = business.status === 'open'
+  const imageSrc = business.image || '/banner.jpg'
+  const useNextImage = isOptimizableImage(imageSrc)
 
   return (
     <section className="relative bg-gray-100 overflow-hidden min-h-[420px] flex items-center">
-      {business.image ? (
+      {useNextImage ? (
+        <Image
+          src={imageSrc}
+          alt=""
+          fill
+          className="object-cover object-center"
+          priority
+          sizes="100vw"
+        />
+      ) : business.image ? (
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${business.image})` }}

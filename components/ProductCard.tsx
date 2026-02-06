@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Product } from '@/types'
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
@@ -61,11 +62,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
         {product.images && product.images.length > 0 && product.images[0] ? (
-          <img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
+          product.images[0].startsWith('http') || product.images[0].startsWith('/') ? (
+            <Image
+              src={product.images[0]}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
+          ) : (
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
             <span className="text-sm">Sin imagen</span>

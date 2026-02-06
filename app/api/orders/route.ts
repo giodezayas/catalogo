@@ -59,9 +59,46 @@ export async function PUT(request: NextRequest) {
     orders[index] = updatedOrder
     await writeOrders(orders)
     return NextResponse.json({ success: true, order: updatedOrder })
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API orders PUT]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        ...(process.env.VERCEL || process.env.NODE_ENV === 'development' ? { message } : {}),
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    const orders = await readOrders()
+    const filtered = orders.filter((o) => o.id !== id)
+    await writeOrders(filtered)
+    return NextResponse.json({ success: true })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API orders DELETE]', error)
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        ...(process.env.VERCEL || process.env.NODE_ENV === 'development' ? { message } : {}),
+      },
       { status: 500 }
     )
   }

@@ -1,9 +1,11 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { ShoppingBag, User } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import { useState } from 'react'
-import CartSidebar from './CartSidebar'
+
+const CartSidebar = dynamic(() => import('./CartSidebar'), { ssr: false })
 
 interface HeaderProps {
   businessName?: string
@@ -44,7 +46,9 @@ export default function Header({ businessName }: HeaderProps) {
           </div>
         </div>
       </header>
-      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {isCartOpen && (
+        <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      )}
     </>
   )
 }

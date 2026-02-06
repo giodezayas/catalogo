@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { Order } from '@/types'
 import toast from 'react-hot-toast'
-import { CheckCircle, XCircle, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, Loader2, Trash2 } from 'lucide-react'
 
 export default function OrdersManagement() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -31,15 +33,33 @@ export default function OrdersManagement() {
   }
 
   async function updateOrderStatus(orderId: string, status: Order['status']) {
-    try {
-      const order = orders.find((o) => o.id === orderId)
-      if (!order) return
+    const order = orders.find((o) => o.id === orderId)
+    if (!order) return
 
+    setUpdatingOrderId(orderId)
+    try {
       await api.updateOrder({ ...order, status })
       toast.success('Estado actualizado')
-      loadOrders()
+      await loadOrders()
     } catch (error) {
       toast.error('Error al actualizar')
+    } finally {
+      setUpdatingOrderId(null)
+    }
+  }
+
+  async function handleDeleteOrder(orderId: string) {
+    if (!confirm('¿Eliminar este pedido de la lista? Esta acción no se puede deshacer.')) return
+
+    setDeletingOrderId(orderId)
+    try {
+      await api.deleteOrder(orderId)
+      toast.success('Pedido eliminado')
+      await loadOrders()
+    } catch (error) {
+      toast.error('Error al eliminar')
+    } finally {
+      setDeletingOrderId(null)
     }
   }
 
@@ -164,19 +184,23 @@ export default function OrdersManagement() {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-gray-200">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
                 {order.status === 'pending' && (
                   <>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'confirmed')}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      disabled={!!updatingOrderId}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                      {updatingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       Confirmar
                     </button>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                      disabled={!!updatingOrderId}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
+                      {updatingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       Cancelar
                     </button>
                   </>
@@ -184,9 +208,26 @@ export default function OrdersManagement() {
                 {order.status === 'confirmed' && (
                   <button
                     onClick={() => updateOrderStatus(order.id, 'completed')}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    disabled={!!updatingOrderId}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
+                    {updatingOrderId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     Marcar como Completado
+                  </button>
+                )}
+                {order.status === 'cancelled' && (
+                  <button
+                    onClick={() => handleDeleteOrder(order.id)}
+                    disabled={!!updatingOrderId || !!deletingOrderId}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Eliminar pedido cancelado de la lista"
+                  >
+                    {deletingOrderId === order.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                    Eliminar
                   </button>
                 )}
               </div>

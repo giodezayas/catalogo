@@ -106,4 +106,9 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(order),
     }),
+
+  deleteOrder: (id: string) =>
+    apiRequest<{ success: boolean }>(`/orders?id=${id}`, {
+      method: 'DELETE',
+    }),
 }
