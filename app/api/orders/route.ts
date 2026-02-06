@@ -16,21 +16,25 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const order: Order = await request.json()
-    const orders = await readOrders()
-
-    // Generate ID if not provided
-    if (!order.id) {
-      order.id = Date.now().toString()
+    const body = await request.json()
+    const order: Order = {
+      ...body,
+      id: body.id || Date.now().toString(),
+      createdAt: body.createdAt ? new Date(body.createdAt) : new Date(),
     }
 
-    order.createdAt = new Date()
+    const orders = await readOrders()
     orders.push(order)
     await writeOrders(orders)
     return NextResponse.json({ success: true, order })
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API orders POST]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        ...(process.env.VERCEL || process.env.NODE_ENV === 'development' ? { message } : {}),
+      },
       { status: 500 }
     )
   }

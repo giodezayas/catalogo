@@ -9,7 +9,7 @@ import { generateWhatsAppMessage, openWhatsApp } from '@/lib/whatsapp'
 import { Order } from '@/types'
 import toast from 'react-hot-toast'
 
-type Step = 'customer' | 'delivery' | 'payment' | 'confirm'
+type Step = 'customer' | 'delivery' | 'payment' | 'confirm' | 'success'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -73,6 +73,10 @@ export default function CheckoutPage() {
     }
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [orderError, setOrderError] = useState<string | null>(null)
+  const [orderCompleted, setOrderCompleted] = useState(false)
+
   const handleSubmit = async () => {
     const order: Order = {
       id: Date.now().toString(),
@@ -99,22 +103,31 @@ export default function CheckoutPage() {
       return
     }
 
+    setOrderError(null)
     const message = generateWhatsAppMessage(order, business)
-    // Abrir WhatsApp de inmediato (antes de await) para que el navegador no bloquee la ventana
     openWhatsApp(business.whatsapp, message)
 
+    setIsSubmitting(true)
     try {
-      await api.createOrder(order)
+      await api.createOrder({
+        ...order,
+        createdAt: order.createdAt.toISOString(),
+      })
       clearCart()
-      toast.success('Pedido guardado. Envía el mensaje en WhatsApp.')
-      router.push('/')
-    } catch (error) {
+      setOrderCompleted(true)
+      setStep('success')
+      toast.success('Pedido creado correctamente')
+    } catch (error: unknown) {
       console.error('Error creating order:', error)
-      toast.error('Error al guardar el pedido. El mensaje ya se abrió en WhatsApp.')
+      const msg = error instanceof Error ? error.message : 'No se pudo guardar el pedido'
+      setOrderError(msg)
+      toast.error('No se pudo guardar el pedido. El mensaje ya se abrió en WhatsApp.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !orderCompleted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -137,7 +150,7 @@ export default function CheckoutPage() {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              {step !== 'customer' && (
+              {step !== 'customer' && step !== 'success' && (
                 <button
                   onClick={handleBack}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -150,6 +163,7 @@ export default function CheckoutPage() {
                 {step === 'delivery' && 'Entrega'}
                 {step === 'payment' && 'Pago'}
                 {step === 'confirm' && 'Confirmar pedido'}
+                {step === 'success' && '¡Pedido realizado!'}
               </h1>
             </div>
             <button
@@ -396,11 +410,36 @@ export default function CheckoutPage() {
                 </div>
               </div>
             )}
+
+            {step === 'success' && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-3xl">✓</span>
+                </div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Tu pedido se creó correctamente</h2>
+                <p className="text-gray-600 mb-8">
+                  Envía el mensaje en WhatsApp para confirmar con el negocio. Cuando vuelvas aquí verás esta confirmación.
+                </p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                >
+                  Volver al catálogo
+                </button>
+              </div>
+            )}
+
+            {step === 'confirm' && orderError && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800">No se pudo guardar el pedido: {orderError}</p>
+                <p className="text-xs text-red-600 mt-1">El mensaje ya se abrió en WhatsApp. Puedes enviarlo igual.</p>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
           <div className="p-6 border-t border-gray-100">
-            {step !== 'confirm' ? (
+            {step === 'success' ? null : step !== 'confirm' ? (
               <button
                 onClick={handleNext}
                 className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors"
@@ -410,10 +449,17 @@ export default function CheckoutPage() {
             ) : (
               <button
                 onClick={handleSubmit}
-                className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full bg-gray-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <span>Enviar pedido por WhatsApp</span>
-                <span>✈️</span>
+                {isSubmitting ? (
+                  <span>Guardando pedido...</span>
+                ) : (
+                  <>
+                    <span>Enviar pedido por WhatsApp</span>
+                    <span>✈️</span>
+                  </>
+                )}
               </button>
             )}
           </div>
