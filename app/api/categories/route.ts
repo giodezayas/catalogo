@@ -4,8 +4,20 @@ import { getCurrentUser } from '@/lib/auth'
 import { Category } from '@/types'
 
 export async function GET() {
-  const categories = await readCategories()
-  return NextResponse.json(categories)
+  try {
+    const categories = await readCategories()
+    return NextResponse.json(categories)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API categories GET]', error)
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        message: process.env.VERCEL || process.env.NODE_ENV === 'development' ? message : undefined,
+      },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {

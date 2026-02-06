@@ -4,8 +4,20 @@ import { getCurrentUser } from '@/lib/auth'
 import { Product } from '@/types'
 
 export async function GET() {
-  const products = await readProducts()
-  return NextResponse.json(products)
+  try {
+    const products = await readProducts()
+    return NextResponse.json(products)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API products GET]', error)
+    return NextResponse.json(
+      {
+        error: 'Internal server error',
+        message: process.env.VERCEL || process.env.NODE_ENV === 'development' ? message : undefined,
+      },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {
