@@ -27,9 +27,15 @@ export async function POST(request: NextRequest) {
     products.push(product)
     await writeProducts(products)
     return NextResponse.json({ success: true, product })
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API products POST]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        ...(process.env.NODE_ENV === 'development' && { message }),
+        ...(process.env.VERCEL && { message }),
+      },
       { status: 500 }
     )
   }
@@ -54,9 +60,15 @@ export async function PUT(request: NextRequest) {
     products[index] = updatedProduct
     await writeProducts(products)
     return NextResponse.json({ success: true, product: updatedProduct })
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API products PUT]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        ...(process.env.NODE_ENV === 'development' && { message }),
+        ...(process.env.VERCEL && { message }),
+      },
       { status: 500 }
     )
   }
@@ -81,9 +93,15 @@ export async function DELETE(request: NextRequest) {
     const filtered = products.filter((p) => p.id !== id)
     await writeProducts(filtered)
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('[API products DELETE]', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        ...(process.env.NODE_ENV === 'development' && { message }),
+        ...(process.env.VERCEL && { message }),
+      },
       { status: 500 }
     )
   }

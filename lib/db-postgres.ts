@@ -10,9 +10,12 @@ const getPool = () => {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not configured')
   }
+  // En Vercel/serverless usar la URL del pooler de Supabase (puerto 6543, "Transaction" mode)
+  // para evitar "too many connections". Pool pequeño por instancia.
   return new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ...(process.env.VERCEL && { max: 2, idleTimeoutMillis: 10000 }),
   })
 }
 
@@ -170,9 +173,13 @@ export async function readProducts(): Promise<Product[]> {
       )
     `)
     
-    const result = await client.query(
-      "SELECT data FROM products ORDER BY (data->>'order')::int"
-    )
+    const result = await client.query(`
+      SELECT data FROM products
+      ORDER BY COALESCE(
+        CASE WHEN (data->>'order') ~ '^-?[0-9]+$' THEN (data->>'order')::int END,
+        0
+      )
+    `)
     return result.rows.map((row) => row.data as Product)
   } catch (error) {
     console.error('Error in readProducts:', error)
