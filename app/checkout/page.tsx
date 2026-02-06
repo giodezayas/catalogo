@@ -94,20 +94,23 @@ export default function CheckoutPage() {
       status: 'pending',
     }
 
-    if (!business) return
-    
+    if (!business?.whatsapp) {
+      toast.error('El negocio no tiene número de WhatsApp configurado')
+      return
+    }
+
+    const message = generateWhatsAppMessage(order, business)
+    // Abrir WhatsApp de inmediato (antes de await) para que el navegador no bloquee la ventana
+    openWhatsApp(business.whatsapp, message)
+
     try {
-      // Save order to backend
       await api.createOrder(order)
-      
-      const message = generateWhatsAppMessage(order, business)
-      openWhatsApp(business.whatsapp, message)
       clearCart()
-      toast.success('Pedido enviado a WhatsApp')
+      toast.success('Pedido guardado. Envía el mensaje en WhatsApp.')
       router.push('/')
     } catch (error) {
       console.error('Error creating order:', error)
-      toast.error('Error al guardar el pedido. Intenta de nuevo.')
+      toast.error('Error al guardar el pedido. El mensaje ya se abrió en WhatsApp.')
     }
   }
 

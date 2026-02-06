@@ -42,8 +42,16 @@ _Generado el ${new Date(order.createdAt).toLocaleString('es-MX')}_`
   return message
 }
 
+/** Normaliza el número para wa.me: solo dígitos, con código de país (ej. 5215551234567) */
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  return digits.startsWith('0') ? digits.slice(1) : digits
+}
+
 export function openWhatsApp(phone: string, message: string) {
+  const normalized = normalizePhone(phone)
+  if (!normalized) return
   const encodedMessage = encodeURIComponent(message)
-  const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`
-  window.open(whatsappUrl, '_blank')
+  const whatsappUrl = `https://wa.me/${normalized}?text=${encodedMessage}`
+  window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
 }
