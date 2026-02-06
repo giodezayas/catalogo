@@ -5,7 +5,11 @@ import { useCartStore } from '@/store/cartStore'
 import { useState } from 'react'
 import CartSidebar from './CartSidebar'
 
-export default function Header() {
+interface HeaderProps {
+  businessName?: string
+}
+
+export default function Header({ businessName }: HeaderProps) {
   const itemCount = useCartStore((state) => state.getItemCount())
   const [isCartOpen, setIsCartOpen] = useState(false)
 
@@ -15,7 +19,7 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Esencia Parfums</h1>
+              <h1 className="text-xl font-semibold text-gray-900">{businessName ?? 'Catálogo'}</h1>
             </div>
             <div className="flex items-center gap-4">
               <button

@@ -59,7 +59,7 @@ export default function ImageUpload({
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       )}
-      <div className="space-y-2">
+      <div className="space-y-2 max-w-[200px]">
         {preview ? (
           <div className="relative group">
             <div className={`${aspectRatio} rounded-lg overflow-hidden border border-gray-200 bg-gray-100`}>
@@ -80,11 +80,11 @@ export default function ImageUpload({
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`${aspectRatio} border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50`}
+            className={`${aspectRatio} min-h-[100px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors bg-gray-50 p-4`}
           >
-            <ImageIcon className="w-8 h-8 text-gray-400 mb-2" />
-            <span className="text-sm text-gray-600">Haz clic para subir imagen</span>
-            <span className="text-xs text-gray-400 mt-1">PNG, JPG hasta 5MB</span>
+            <ImageIcon className="w-6 h-6 text-gray-400 mb-1" />
+            <span className="text-xs text-gray-600 text-center">Haz clic para subir</span>
+            <span className="text-xs text-gray-400">PNG, JPG hasta 5MB</span>
           </div>
         )}
         <input
