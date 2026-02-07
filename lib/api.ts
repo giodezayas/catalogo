@@ -73,6 +73,10 @@ export const api = {
   // Products
   getProducts: () =>
     apiRequest<any[]>('/products?all=1'),
+  getProductsLite: () =>
+    apiRequest<any[]>('/products?all=1&lite=1'),
+  getProduct: (id: string) =>
+    apiRequest<any>(`/products?id=${id}`),
   getProductsCatalog: (params?: { categoryId?: string; page?: number; limit?: number }) => {
     const search = new URLSearchParams()
     if (params?.categoryId) search.set('categoryId', params.categoryId)

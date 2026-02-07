@@ -6,7 +6,9 @@ import { Category } from '@/types'
 export async function GET() {
   try {
     const categories = await readCategories()
-    return NextResponse.json(categories)
+    const res = NextResponse.json(categories)
+    res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    return res
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     console.error('[API categories GET]', error)

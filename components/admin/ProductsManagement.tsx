@@ -14,6 +14,7 @@ export default function ProductsManagement() {
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [loadingEdit, setLoadingEdit] = useState(false)
   const [showForm, setShowForm] = useState(false)
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function ProductsManagement() {
   async function loadData() {
     try {
       const [productsData, categoriesData] = await Promise.all([
-        api.getProducts(),
+        api.getProductsLite(),
         api.getCategories(),
       ])
       setProducts(productsData)
@@ -365,11 +366,19 @@ export default function ProductsManagement() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  setEditingProduct({ ...product })
-                  setShowForm(true)
+                onClick={async () => {
+                  setLoadingEdit(true)
+                  try {
+                    const full = await api.getProduct(product.id)
+                    setEditingProduct(full)
+                    setShowForm(true)
+                  } catch {
+                    toast.error('Error al cargar producto')
+                  } finally {
+                    setLoadingEdit(false)
+                  }
                 }}
-                disabled={!!savingProductId || !!deletingProductId}
+                disabled={!!savingProductId || !!deletingProductId || loadingEdit}
                 className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Edit2 className="w-4 h-4" />

@@ -69,6 +69,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               fill
               className="object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              loading="lazy"
             />
           ) : (
             <img
@@ -76,6 +77,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               alt={product.name}
               className="w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
             />
           )
         ) : (

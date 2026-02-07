@@ -46,7 +46,7 @@ export default function Statistics() {
     try {
       const [ordersData, productsData] = await Promise.all([
         api.getOrders(),
-        api.getProducts(),
+        api.getProductsLite(),
       ])
       setOrders(ordersData)
       setProducts(productsData)

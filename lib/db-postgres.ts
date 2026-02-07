@@ -110,22 +110,19 @@ export async function readBusiness(): Promise<Business> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS business (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
-    const result = await client.query('SELECT data FROM business WHERE id = $1', ['1'])
+    let result
+    try {
+      result = await client.query('SELECT data FROM business WHERE id = $1', ['1'])
+    } catch (e: unknown) {
+      if (e instanceof Error && /relation .* does not exist/i.test(e.message)) {
+        await initDatabase()
+        result = await client.query('SELECT data FROM business WHERE id = $1', ['1'])
+      } else throw e
+    }
     if (result.rows.length === 0) {
-      // Si no existe, inicializar con datos por defecto
       await initDatabase()
       const newResult = await client.query('SELECT data FROM business WHERE id = $1', ['1'])
-      if (newResult.rows.length === 0) {
-        throw new Error('Business not found and could not be initialized')
-      }
+      if (newResult.rows.length === 0) throw new Error('Business not found')
       return newResult.rows[0].data as Business
     }
     return result.rows[0].data as Business
@@ -141,14 +138,6 @@ export async function readCategories(): Promise<Category[]> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
     const result = await client.query(
       "SELECT data FROM categories ORDER BY (data->>'order')::int"
     )
@@ -165,14 +154,6 @@ export async function readProducts(): Promise<Product[]> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
     const result = await client.query(`
       SELECT data FROM products
       ORDER BY COALESCE(
@@ -193,15 +174,6 @@ export async function readOrders(): Promise<Order[]> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `)
-    
     const result = await client.query('SELECT data FROM orders ORDER BY created_at DESC')
     return result.rows.map((row) => {
       const order = row.data as Order
@@ -221,14 +193,6 @@ export async function writeBusiness(business: Business): Promise<void> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe antes de escribir
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS business (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
     await client.query(
       'INSERT INTO business (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = $2',
       [business.id, JSON.stringify(business)]
@@ -245,14 +209,6 @@ export async function writeCategories(categories: Category[]): Promise<void> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
     await client.query('BEGIN')
     await client.query('DELETE FROM categories')
     for (const category of categories) {
@@ -275,14 +231,6 @@ export async function writeProducts(products: Product[]): Promise<void> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL
-      )
-    `)
-    
     await client.query('BEGIN')
     await client.query('DELETE FROM products')
     for (const product of products) {
@@ -305,15 +253,6 @@ export async function writeOrders(orders: Order[]): Promise<void> {
   const pool = getPoolInstance()
   const client = await pool.connect()
   try {
-    // Asegurar que la tabla existe
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS orders (
-        id TEXT PRIMARY KEY,
-        data JSONB NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `)
-    
     await client.query('BEGIN')
     for (const order of orders) {
       await client.query(

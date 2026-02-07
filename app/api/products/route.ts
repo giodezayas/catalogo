@@ -10,9 +10,21 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
 
-    // ?all=1 → array completo (admin, backward compat)
-    if (searchParams.get('all') === '1') {
+    // ?id=xxx → un solo producto (para edición, incluye imágenes)
+    const singleId = searchParams.get('id')
+    if (singleId) {
       const products = await readProducts()
+      const p = products.find((x) => x.id === singleId)
+      if (!p) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      return NextResponse.json(p)
+    }
+
+    // ?all=1 → array completo. ?lite=1 elimina imágenes (admin listado/estadísticas)
+    if (searchParams.get('all') === '1') {
+      let products = await readProducts()
+      if (searchParams.get('lite') === '1') {
+        products = products.map(({ images, ...rest }) => ({ ...rest, images: [] }))
+      }
       return NextResponse.json(products)
     }
 
@@ -31,13 +43,16 @@ export async function GET(request: NextRequest) {
     const total = products.length
     const items = products.slice(offset, offset + limit)
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       items,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
     })
+    // Cache en CDN 60s para reducir carga en DB
+    res.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120')
+    return res
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     console.error('[API products GET]', error)
