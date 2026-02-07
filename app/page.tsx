@@ -1,12 +1,12 @@
 import { unstable_cache } from 'next/cache'
-import { readBusiness, readCategories, readProducts } from '@/lib/db'
+import { readBusiness, readCategories } from '@/lib/db'
 import HomeClient from '@/components/HomeClient'
-import { Business, Category, Product } from '@/types'
+import { Business, Category } from '@/types'
 
-// Cache de datos para que la primera carga sea rápida (revalidar cada 60 s)
+// Solo business + categories en el payload (pequeño). Productos se cargan client-side vía API.
 async function getCachedData() {
   try {
-    const [business, categories, products] = await Promise.all([
+    const [business, categories] = await Promise.all([
       unstable_cache(async () => readBusiness(), ['catalog-business'], {
         revalidate: 60,
         tags: ['business'],
@@ -15,12 +15,8 @@ async function getCachedData() {
         revalidate: 60,
         tags: ['categories'],
       })(),
-      unstable_cache(async () => readProducts(), ['catalog-products'], {
-        revalidate: 60,
-        tags: ['products'],
-      })(),
     ])
-    return { business, categories, products }
+    return { business, categories }
   } catch (e) {
     console.error('Error loading catalog data:', e)
     return null
@@ -38,7 +34,7 @@ export default async function Home() {
     )
   }
 
-  const { business, categories, products } = data
+  const { business, categories } = data
 
   if (!business) {
     return (
@@ -52,7 +48,6 @@ export default async function Home() {
     <HomeClient
       initialBusiness={business as Business}
       initialCategories={(categories || []) as Category[]}
-      initialProducts={(products || []) as Product[]}
     />
   )
 }

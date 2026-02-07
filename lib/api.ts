@@ -72,7 +72,17 @@ export const api = {
 
   // Products
   getProducts: () =>
-    apiRequest<any[]>('/products'),
+    apiRequest<any[]>('/products?all=1'),
+  getProductsCatalog: (params?: { categoryId?: string; page?: number; limit?: number }) => {
+    const search = new URLSearchParams()
+    if (params?.categoryId) search.set('categoryId', params.categoryId)
+    if (params?.page) search.set('page', String(params.page))
+    if (params?.limit) search.set('limit', String(params.limit))
+    const qs = search.toString()
+    return apiRequest<{ items: any[]; total: number; page: number; limit: number; totalPages: number }>(
+      `/products${qs ? `?${qs}` : ''}`
+    )
+  },
 
   createProduct: (product: any) =>
     apiRequest<{ success: boolean; product: any }>('/products', {

@@ -1,33 +1,62 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import CategoryFilter from '@/components/CategoryFilter'
 import ProductGrid from '@/components/ProductGrid'
+import { api } from '@/lib/api'
 import { Business, Category, Product } from '@/types'
 
 interface HomeClientProps {
   initialBusiness: Business
   initialCategories: Category[]
-  initialProducts: Product[]
 }
 
 export default function HomeClient({
   initialBusiness,
   initialCategories,
-  initialProducts,
 }: HomeClientProps) {
   const [selectedCategory, setSelectedCategory] = useState('1')
+  const [products, setProducts] = useState<Product[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
-  const filteredProducts = useMemo(() => {
-    if (selectedCategory === '1') {
-      return initialProducts.filter((p) => p.status === 'active')
-    }
-    return initialProducts.filter(
-      (p) => p.categoryId === selectedCategory && p.status === 'active'
-    )
-  }, [selectedCategory, initialProducts])
+  useEffect(() => {
+    setLoading(true)
+    setPage(1)
+    api
+      .getProductsCatalog({
+        categoryId: selectedCategory === '1' ? undefined : selectedCategory,
+        page: 1,
+        limit: 24,
+      })
+      .then((res) => {
+        setProducts(res.items)
+        setTotalPages(res.totalPages)
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [selectedCategory])
+
+  const loadMore = () => {
+    const nextPage = page + 1
+    if (nextPage > totalPages || loadingMore) return
+    setLoadingMore(true)
+    api
+      .getProductsCatalog({
+        categoryId: selectedCategory === '1' ? undefined : selectedCategory,
+        page: nextPage,
+        limit: 24,
+      })
+      .then((res) => {
+        setProducts((prev) => [...prev, ...res.items])
+        setPage(nextPage)
+      })
+      .finally(() => setLoadingMore(false))
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -40,7 +69,28 @@ export default function HomeClient({
           onSelectCategory={setSelectedCategory}
         />
         <div className="mt-8">
-          <ProductGrid products={filteredProducts} />
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-64 bg-gray-100 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <ProductGrid products={products} />
+              {page < totalPages && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {loadingMore ? 'Cargando...' : 'Cargar más'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
       <footer className="bg-gray-50 border-t border-gray-100 mt-16">

@@ -3,10 +3,41 @@ import { readProducts, writeProducts } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { Product } from '@/types'
 
-export async function GET() {
+const DEFAULT_LIMIT = 24
+const MAX_LIMIT = 100
+
+export async function GET(request: NextRequest) {
   try {
-    const products = await readProducts()
-    return NextResponse.json(products)
+    const { searchParams } = new URL(request.url)
+
+    // ?all=1 → array completo (admin, backward compat)
+    if (searchParams.get('all') === '1') {
+      const products = await readProducts()
+      return NextResponse.json(products)
+    }
+
+    const categoryId = searchParams.get('categoryId') ?? undefined
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10))
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get('limit') ?? String(DEFAULT_LIMIT), 10)))
+    const offset = (page - 1) * limit
+
+    let products = await readProducts()
+    products = products.filter((p) => p.status === 'active')
+
+    if (categoryId && categoryId !== 'all') {
+      products = products.filter((p) => p.categoryId === categoryId)
+    }
+
+    const total = products.length
+    const items = products.slice(offset, offset + limit)
+
+    return NextResponse.json({
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     console.error('[API products GET]', error)
